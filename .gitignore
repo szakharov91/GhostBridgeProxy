@@ -57,3 +57,4 @@ artifacts/
 # Publish output
 publish/
 src/GhostBridgeProxy.Server/appsettings.Development.json
+src/index.html
