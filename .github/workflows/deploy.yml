@@ -1,0 +1,49 @@
+name: Deploy GhostBridgeProxy Server
+
+on:
+  push:
+    branches:
+      - main  # или master - проверьте название вашей основной ветки
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Получаем код из репозитория
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Устанавливаем .NET SDK
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # 3. Восстанавливаем и публикуем конкретный проект
+      - name: Publish .NET App
+        run: |
+          cd ./src/GhostBridgeProxy.Server
+          dotnet restore
+          dotnet publish -c Release -o ./publish
+
+      # 4. Копируем файлы на сервер
+      - name: Deploy via rsync
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avzr --delete
+          path: ./src/GhostBridgeProxy.Server/publish/
+          remote_path: ${{ secrets.SERVER_PATH }}
+          remote_host: ${{ secrets.SERVER_IP }}
+          remote_user: ${{ secrets.SERVER_USER }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      # 5. Перезапускаем сервис на сервере
+      - name: Restart GhostBridge Service
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sudo systemctl restart ghostbridge.service
+            echo "✅ Service restarted successfully"
