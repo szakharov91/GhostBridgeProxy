@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "GhostBridgeProxy.TestApp": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:8787"
+    }
+  }
+}

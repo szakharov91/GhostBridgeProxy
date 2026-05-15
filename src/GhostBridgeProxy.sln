@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GhostBridgeProxy.Client", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GhostBridgeProxy.Server", "GhostBridgeProxy.Server\GhostBridgeProxy.Server.csproj", "{7B0B7A83-201F-47F2-8F2C-5E4F83D201F7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GhostBridgeProxy.TestApp", "..\tests\GhostBridgeProxy.TestApp\GhostBridgeProxy.TestApp.csproj", "{9EF82DBB-C177-4363-B27B-DD6484D7C37D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{7B0B7A83-201F-47F2-8F2C-5E4F83D201F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7B0B7A83-201F-47F2-8F2C-5E4F83D201F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7B0B7A83-201F-47F2-8F2C-5E4F83D201F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9EF82DBB-C177-4363-B27B-DD6484D7C37D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9EF82DBB-C177-4363-B27B-DD6484D7C37D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9EF82DBB-C177-4363-B27B-DD6484D7C37D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9EF82DBB-C177-4363-B27B-DD6484D7C37D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
