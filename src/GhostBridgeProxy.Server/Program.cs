@@ -1,44 +1,55 @@
+using GhostBridgeProxy.Server;
+using Yarp.ReverseProxy.Configuration;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.Configure<TunnelOptions>(
+    builder.Configuration.GetSection(TunnelOptions.SectionName));
+
+builder.Services.AddSingleton<TunnelRegistry>();
+builder.Services.AddHostedService<TunnelTcpListenerHostedService>();
+
+builder.Services.AddReverseProxy()
+    .LoadFromMemory(GetRoutes(), GetClusters());
+
+builder.WebHost.ConfigureKestrel((ctx, options) =>
+{
+    var port = ctx.Configuration.GetValue("Tunnel:ControlListenPort", 5080);
+    options.ListenAnyIP(port);
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+app.UseWebSockets();
+
+app.Map("/tunnel", async (HttpContext context, TunnelRegistry registry, IConfiguration configuration, ILogger<TunnelRegistry> log) =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    if (!context.WebSockets.IsWebSocketRequest)
+    {
+        context.Response.StatusCode = 400;
+        return;
+    }
 
-app.UseHttpsRedirection();
+    var secret = configuration["Tunnel:SharedSecret"];
+    if (!string.IsNullOrEmpty(secret))
+    {
+        var token = context.Request.Query["token"].FirstOrDefault()
+            ?? context.Request.Headers["X-Tunnel-Token"].FirstOrDefault();
+        if (token != secret)
+        {
+            context.Response.StatusCode = 403;
+            return;
+        }
+    }
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+    await TunnelAgentConnection.RunAsync(webSocket, registry, log, context.RequestAborted);
+});
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+app.MapReverseProxy();
 
-app.Run();
+await app.RunAsync();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+static IReadOnlyList<RouteConfig> GetRoutes() => Array.Empty<RouteConfig>();
+
+static IReadOnlyList<ClusterConfig> GetClusters() => Array.Empty<ClusterConfig>();
